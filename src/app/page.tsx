@@ -6,7 +6,7 @@ import { object, string } from "yup";
 interface FormValues {
   wallet_id: string;
   csv: File | string;
-  outputName: string;
+  output_name: string;
 }
 
 const WALLET_ADDRESSES = {
@@ -19,7 +19,7 @@ const WALLET_ADDRESSES = {
 const formSchema = object({
   wallet_id: string().required("Wallet ID is required"),
   csv: string().required("CSV is required"),
-  outputName: string().required("Output name is required"),
+  output_name: string().required("Output name is required"),
 });
 
 export default function Home() {
@@ -29,7 +29,7 @@ export default function Home() {
     if (values.csv) {
       formData.append("csv", values.csv);
     }
-    formData.append("output-name", values.outputName);
+    formData.append("output_name", values.output_name);
 
     const response = await fetch("/api/csv", {
       method: "POST",
@@ -53,15 +53,31 @@ export default function Home() {
         </div>
 
         <Formik
-          initialValues={{ wallet_id: "", csv: "", outputName: "" }}
+          initialValues={{ wallet_id: "", csv: "", output_name: "" }}
           onSubmit={handleSubmit}
           validationSchema={formSchema}
         >
-          {({ errors, touched }) => (
+          {({ errors, touched, setFieldValue }) => (
             <Form className="space-y-4">
               <div>
                 <label htmlFor="wallet_id">Wallet ID</label>
-                <Field as="select" name="wallet_id">
+                <Field
+                  as="select"
+                  name="wallet_id"
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                    const walletName =
+                      Object.values(WALLET_ADDRESSES).find(
+                        (wallet) => wallet.id === e.target.value
+                      )?.name || "";
+                    setFieldValue(
+                      "output_name",
+                      `hedera_${walletName.replace(" ", "-").toLowerCase()}_${
+                        e.target.value
+                      }_`
+                    );
+                    setFieldValue("wallet_id", e.target.value);
+                  }}
+                >
                   <option value="" disabled>
                     Select a wallet
                   </option>
@@ -87,11 +103,11 @@ export default function Home() {
               </div>
 
               <div>
-                <label htmlFor="output-name">Output name</label>
-                <Field as="input" type="text" name="outputName" />
+                <label htmlFor="output_name">Output name</label>
+                <Field as="input" type="text" name="output_name" />
                 <div className="error">
-                  {errors.outputName && touched.outputName ? (
-                    <div>{errors.outputName}</div>
+                  {errors.output_name && touched.output_name ? (
+                    <div>{errors.output_name}</div>
                   ) : null}
                 </div>
               </div>
