@@ -1,11 +1,12 @@
 "use client";
 
 import { Formik, Form, Field } from "formik";
-import { object, string } from "yup";
+import { object, string, number } from "yup";
 
 interface FormValues {
+  tax_year: number;
   wallet_id: string;
-  csv: File;
+  csv: File | null;
   output_name: string;
 }
 
@@ -16,7 +17,10 @@ const WALLET_ADDRESSES = {
   EDF_STAKING: { name: "EDF Staking", id: "0.0.1977756" },
 };
 
+const TAX_YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+
 const formSchema = object({
+  tax_year: number().required("Tax year is required"),
   wallet_id: string().required("Wallet ID is required"),
   csv: object().required("CSV is required"),
   output_name: string().required("Output name is required"),
@@ -44,6 +48,15 @@ export default function Home() {
     a.click();
   };
 
+  function getOutputName(walletId: string, taxYear: number): string {
+    const walletName =
+      Object.values(WALLET_ADDRESSES).find((wallet) => wallet.id === walletId)
+        ?.name || "";
+    return `hedera_${walletName
+      .replace(" ", "-")
+      .toLowerCase()}_${walletId}_${taxYear}`;
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
       <div className="max-w-sm w-full">
@@ -53,11 +66,16 @@ export default function Home() {
         </div>
 
         <Formik
-          initialValues={{ wallet_id: "", csv: "", output_name: "" }}
+          initialValues={{
+            wallet_id: "",
+            tax_year: 2025,
+            csv: null,
+            output_name: "",
+          }}
           onSubmit={handleSubmit}
           validationSchema={formSchema}
         >
-          {({ errors, touched, setFieldValue }) => (
+          {({ errors, touched, values, setFieldValue }) => (
             <Form className="space-y-4">
               <div>
                 <label htmlFor="wallet_id">Wallet ID</label>
@@ -65,22 +83,15 @@ export default function Home() {
                   id="wallet_id"
                   name="wallet_id"
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                    const walletName =
-                      Object.values(WALLET_ADDRESSES).find(
-                        (wallet) => wallet.id === e.target.value
-                      )?.name || "";
+                    const walletId = e.target.value;
                     setFieldValue(
                       "output_name",
-                      `hedera_${walletName.replace(" ", "-").toLowerCase()}_${
-                        e.target.value
-                      }_`
+                      getOutputName(walletId, values.tax_year)
                     );
                     setFieldValue("wallet_id", e.target.value);
                   }}
                 >
-                  <option value="" disabled>
-                    Select a wallet
-                  </option>
+                  <option value="">Select a wallet</option>
                   {Object.entries(WALLET_ADDRESSES).map(([key, value]) => (
                     <option key={key} value={value.id}>
                       {value.name} - {value.id}
@@ -110,6 +121,35 @@ export default function Home() {
                 />
                 <div className="error">
                   {errors.csv && touched.csv ? <div>{errors.csv}</div> : null}
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="tax_year">Tax Year</label>
+                <select
+                  id="tax_year"
+                  name="tax_year"
+                  value={values.tax_year}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                    const taxYear = e.target.value;
+                    setFieldValue(
+                      "output_name",
+                      getOutputName(values.wallet_id, parseInt(taxYear))
+                    );
+                    setFieldValue("tax_year", taxYear);
+                  }}
+                >
+                  <option value="">Select a tax year</option>
+                  {TAX_YEARS.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+                <div className="error">
+                  {errors.tax_year && touched.tax_year ? (
+                    <div>{errors.tax_year}</div>
+                  ) : null}
                 </div>
               </div>
 
