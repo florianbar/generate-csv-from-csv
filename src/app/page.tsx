@@ -5,7 +5,7 @@ import { object, string } from "yup";
 
 interface FormValues {
   wallet_id: string;
-  csv: File | string;
+  csv: File;
   output_name: string;
 }
 
@@ -18,7 +18,7 @@ const WALLET_ADDRESSES = {
 
 const formSchema = object({
   wallet_id: string().required("Wallet ID is required"),
-  csv: string().required("CSV is required"),
+  csv: object().required("CSV is required"),
   output_name: string().required("Output name is required"),
 });
 
@@ -27,7 +27,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("wallet_id", values.wallet_id);
     if (values.csv) {
-      formData.append("csv", values.csv);
+      formData.append("csv", values.csv.files[0]);
     }
     formData.append("output_name", values.output_name);
 
@@ -40,7 +40,7 @@ export default function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "transformed.csv";
+    a.download = `${values.output_name}.csv`;
     a.click();
   };
 
@@ -61,8 +61,8 @@ export default function Home() {
             <Form className="space-y-4">
               <div>
                 <label htmlFor="wallet_id">Wallet ID</label>
-                <Field
-                  as="select"
+                <select
+                  id="wallet_id"
                   name="wallet_id"
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                     const walletName =
@@ -86,7 +86,7 @@ export default function Home() {
                       {value.name} - {value.id}
                     </option>
                   ))}
-                </Field>
+                </select>
                 <div className="error">
                   {errors.wallet_id && touched.wallet_id ? (
                     <div>{errors.wallet_id}</div>
@@ -96,7 +96,18 @@ export default function Home() {
 
               <div>
                 <label htmlFor="csv">Upload CSV</label>
-                <Field as="input" type="file" name="csv" />
+                <input
+                  id="csv"
+                  name="csv"
+                  type="file"
+                  accept=".csv"
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    if (file) {
+                      setFieldValue("csv", { files: [file] });
+                    }
+                  }}
+                />
                 <div className="error">
                   {errors.csv && touched.csv ? <div>{errors.csv}</div> : null}
                 </div>
@@ -104,7 +115,12 @@ export default function Home() {
 
               <div>
                 <label htmlFor="output_name">Output name</label>
-                <Field as="input" type="text" name="output_name" />
+                <Field
+                  id="output_name"
+                  type="text"
+                  name="output_name"
+                  as="input"
+                />
                 <div className="error">
                   {errors.output_name && touched.output_name ? (
                     <div>{errors.output_name}</div>

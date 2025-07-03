@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
+import { HederaRecord } from "@/types/hedera";
+import { KoinlyRecord } from "@/types/koinly";
 
 export async function POST(request: NextRequest) {
   try {
     // Get the CSV data from the request body
     const formData = await request.formData();
+    const walletId = formData.get("wallet_id") as string;
+    const outputName = formData.get("output_name") as string;
     const csvFile = formData.get("csv") as File;
+
+    console.log("Received walletId:", walletId);
+    console.log("Received outputName:", outputName);
+    console.log("Received csvFile:", csvFile);
 
     if (!csvFile) {
       return NextResponse.json(
@@ -26,15 +34,20 @@ export async function POST(request: NextRequest) {
     });
 
     // Transform the data according to the specified structure
-    const transformedData = records.map((record: any) => ({
-      account_id: record["#from_account_id"],
-      amount: parseFloat(record["#amount"]) || 0,
-    }));
+    const transformedData = records.map((record: HederaRecord) => {
+      return {
+        "Koinly Date": record["#date"],
+        Amount: record["#amount"],
+        Currency: "HBAR",
+        Label: "",
+        TxHash: record["#transaction_id"],
+      } as KoinlyRecord;
+    });
 
     // Convert back to CSV
     const outputCsv = stringify(transformedData, {
       header: true,
-      columns: ["account_id", "amount"],
+      columns: ["Koinly Date", "Amount", "Currency", "Label", "TxHash"],
     });
 
     // Return the transformed CSV
@@ -42,7 +55,7 @@ export async function POST(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "text/csv",
-        "Content-Disposition": 'attachment; filename="transformed.csv"',
+        "Content-Disposition": `attachment; filename="${outputName}.csv"`,
       },
     });
   } catch (error) {
