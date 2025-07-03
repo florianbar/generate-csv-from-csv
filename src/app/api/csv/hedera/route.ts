@@ -3,29 +3,13 @@ import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
 import { HederaRecord } from "@/types/hedera";
 import { KoinlyRecord } from "@/types/koinly";
-import { parse as dateParse, format } from "date-fns";
-
-function convertDateFormat(dateString: string): string {
-  const parsedDate = dateParse(
-    dateString,
-    "MM/dd/yyyy, hh:mm:ss a",
-    new Date()
-  );
-
-  return format(parsedDate, "yyyy-MM-dd HH:mm:ss") + " UTC";
-}
+import { convertDateFormat } from "@/utils/hedera";
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the CSV data from the request body
     const formData = await request.formData();
-    const walletId = formData.get("wallet_id") as string;
     const outputName = formData.get("output_name") as string;
     const csvFile = formData.get("csv") as File;
-
-    console.log("Received walletId:", walletId);
-    console.log("Received outputName:", outputName);
-    console.log("Received csvFile:", csvFile);
 
     if (!csvFile) {
       return NextResponse.json(
@@ -76,18 +60,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Also support GET request to show usage instructions
-export async function GET() {
-  return NextResponse.json({
-    message: "CSV Transformation API",
-    usage: {
-      method: "POST",
-      endpoint: "/api/csv",
-      body: 'FormData with "csv" field containing the CSV file',
-      input: "CSV with columns: #from_account_id, #amount",
-      output: "CSV with columns: account_id, amount",
-    },
-  });
 }

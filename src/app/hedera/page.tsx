@@ -24,7 +24,6 @@ const taxYears = getTaxYears();
 export default function Home() {
   const handleSubmit = async (values: FormValues) => {
     const formData = new FormData();
-    formData.append("wallet_id", values.wallet_id);
     if (values.csv) {
       formData.append("csv", values.csv.files[0]);
     }
