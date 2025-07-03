@@ -3,6 +3,17 @@ import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
 import { HederaRecord } from "@/types/hedera";
 import { KoinlyRecord } from "@/types/koinly";
+import { parse as dateParse, format } from "date-fns";
+
+function convertDateFormat(dateString: string): string {
+  const parsedDate = dateParse(
+    dateString,
+    "MM/dd/yyyy, hh:mm:ss a",
+    new Date()
+  );
+
+  return format(parsedDate, "yyyy-MM-dd HH:mm:ss") + " UTC";
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +47,7 @@ export async function POST(request: NextRequest) {
     // Transform the data according to the specified structure
     const transformedData = records.map((record: HederaRecord) => {
       return {
-        "Koinly Date": record["#date"],
+        "Koinly Date": convertDateFormat(record["#date"]),
         Amount: record["#amount"],
         Currency: "HBAR",
         Label: "",
