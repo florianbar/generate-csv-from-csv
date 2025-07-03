@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         "Koinly Date": convertDateFormat(record["#date"]),
         Amount: record["#amount"],
         Currency: "HBAR",
-        Label: "",
+        Label: "", // "Reward" or "" based on your logic
         TxHash: record["#transaction_id"],
       } as KoinlyRecord;
     });
