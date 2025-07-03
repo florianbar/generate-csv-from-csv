@@ -72,7 +72,7 @@ export default function Home() {
           validationSchema={formSchema}
         >
           {({ errors, touched, values, setFieldValue }) => (
-            <Form className="space-y-4">
+            <Form className="space-y-5">
               <div>
                 <label htmlFor="wallet_id">Wallet ID</label>
                 <select
@@ -117,6 +117,12 @@ export default function Home() {
                     }
                   }}
                 />
+                {/* display selected file name */}
+                <div className="text-xs text-gray-400 mt-2">
+                  {values.csv && values.csv.files && values.csv.files.length > 0
+                    ? values.csv.files[0].name
+                    : "No file selected"}
+                </div>
                 <div className="error">
                   {errors.csv && touched.csv ? <div>{errors.csv}</div> : null}
                 </div>

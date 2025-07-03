@@ -27,7 +27,7 @@ p {
 }
 
 label {
-  @apply block text-gray-300 mb-1 text-xs font-bold;
+  @apply block mb-1 text-sm font-bold;
 }
 
 input[type="text"],
