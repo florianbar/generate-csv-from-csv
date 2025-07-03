@@ -2,6 +2,8 @@
 
 import { Formik, Form, Field } from "formik";
 import { object, string, number } from "yup";
+import { HEDERA_WALLET_ADDRESSES } from "@/constants/hedera";
+import { getTaxYears } from "@/utils/tax";
 
 interface FormValues {
   tax_year: number;
@@ -10,21 +12,14 @@ interface FormValues {
   output_name: string;
 }
 
-const WALLET_ADDRESSES = {
-  MAIN: { name: "Main", id: "0.0.1452054" },
-  SECONDARY: { name: "Secondary", id: "0.0.1874847" },
-  TATA_STAKING: { name: "Tata Staking", id: "0.0.1874888" },
-  EDF_STAKING: { name: "EDF Staking", id: "0.0.1977756" },
-};
-
-const TAX_YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
-
 const formSchema = object({
   tax_year: number().required("Tax year is required"),
   wallet_id: string().required("Wallet ID is required"),
   csv: object().required("CSV is required"),
   output_name: string().required("Output name is required"),
 });
+
+const taxYears = getTaxYears();
 
 export default function Home() {
   const handleSubmit = async (values: FormValues) => {
@@ -50,8 +45,9 @@ export default function Home() {
 
   function getOutputName(walletId: string, taxYear: number): string {
     const walletName =
-      Object.values(WALLET_ADDRESSES).find((wallet) => wallet.id === walletId)
-        ?.name || "";
+      Object.values(HEDERA_WALLET_ADDRESSES).find(
+        (wallet) => wallet.id === walletId
+      )?.name || "";
     return `hedera_${walletName
       .replace(" ", "-")
       .toLowerCase()}_${walletId}_${taxYear}`;
@@ -92,11 +88,13 @@ export default function Home() {
                   }}
                 >
                   <option value="">Select a wallet</option>
-                  {Object.entries(WALLET_ADDRESSES).map(([key, value]) => (
-                    <option key={key} value={value.id}>
-                      {value.name} - {value.id}
-                    </option>
-                  ))}
+                  {Object.entries(HEDERA_WALLET_ADDRESSES).map(
+                    ([key, value]) => (
+                      <option key={key} value={value.id}>
+                        {value.name} - {value.id}
+                      </option>
+                    )
+                  )}
                 </select>
                 <div className="error">
                   {errors.wallet_id && touched.wallet_id ? (
@@ -140,7 +138,7 @@ export default function Home() {
                   }}
                 >
                   <option value="">Select a tax year</option>
-                  {TAX_YEARS.map((year) => (
+                  {taxYears.map((year: number) => (
                     <option key={year} value={year}>
                       {year}
                     </option>
