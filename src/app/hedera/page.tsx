@@ -35,7 +35,7 @@ export default function Home() {
     }
     formData.append("output_name", values.output_name);
 
-    const response = await fetch("/api/csv", {
+    const response = await fetch("/api/csv/hedera", {
       method: "POST",
       body: formData,
     });
