@@ -6,3 +6,9 @@ export interface HederaRecord {
   "#transaction_id": string;
   "#transaction_type": string;
 }
+
+export interface HederaWallet {
+  name: string;
+  id: string;
+  staking?: boolean;
+}

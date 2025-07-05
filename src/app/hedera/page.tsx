@@ -2,7 +2,7 @@
 
 import { Formik, Form, Field } from "formik";
 import { object, string, number } from "yup";
-import { HEDERA_WALLET_ADDRESSES } from "@/constants/hedera";
+import { WALLETS } from "@/constants/hedera";
 import { getTaxYears } from "@/utils/tax";
 
 interface FormValues {
@@ -24,6 +24,7 @@ const taxYears = getTaxYears();
 export default function Home() {
   const handleSubmit = async (values: FormValues) => {
     const formData = new FormData();
+    formData.append("wallet_id", values.wallet_id);
     if (values.csv) {
       formData.append("csv", values.csv.files[0]);
     }
@@ -43,10 +44,7 @@ export default function Home() {
   };
 
   function getOutputName(walletId: string, taxYear: number): string {
-    const walletName =
-      Object.values(HEDERA_WALLET_ADDRESSES).find(
-        (wallet) => wallet.id === walletId
-      )?.name || "";
+    const walletName = WALLETS[walletId]?.name || "";
     return `hedera_${walletName
       .replace(" ", "-")
       .toLowerCase()}_${walletId}_${taxYear}`;
@@ -87,13 +85,11 @@ export default function Home() {
                   }}
                 >
                   <option value="">Select a wallet</option>
-                  {Object.entries(HEDERA_WALLET_ADDRESSES).map(
-                    ([key, value]) => (
-                      <option key={key} value={value.id}>
-                        {value.name} - {value.id}
-                      </option>
-                    )
-                  )}
+                  {Object.entries(WALLETS).map(([key, value]) => (
+                    <option key={key} value={value.id}>
+                      {value.name} - {value.id}
+                    </option>
+                  ))}
                 </select>
                 <div className="error">
                   {errors.wallet_id && touched.wallet_id ? (
@@ -103,7 +99,9 @@ export default function Home() {
               </div>
 
               <div>
-                <label htmlFor="csv">Upload CSV</label>
+                <label htmlFor="csv" className="custom-file-upload">
+                  Upload CSV
+                </label>
                 <input
                   id="csv"
                   name="csv"
@@ -117,7 +115,7 @@ export default function Home() {
                   }}
                 />
                 {/* display selected file name */}
-                <div className="text-xs text-gray-400 mt-2">
+                <div className="text-xs mt-1">
                   {values.csv && values.csv.files && values.csv.files.length > 0
                     ? values.csv.files[0].name
                     : "No file selected"}
