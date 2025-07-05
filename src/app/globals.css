@@ -32,8 +32,17 @@ label {
 
 input[type="text"],
 input[type="file"],
-select {
+select,
+.custom-file-upload {
   @apply block w-full text-white border border-gray-300 rounded-md p-2;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.custom-file-upload {
+  @apply inline-block w-auto font-normal px-3;
 }
 
 button {
