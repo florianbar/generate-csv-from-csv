@@ -47,61 +47,81 @@ export async function POST(request: NextRequest) {
       {} as Record<string, HederaRecord[]>
     );
 
-    // console.log("groupedRecords :::::", Object.values(groupedRecords)[0]);
-
     const transformedData: KoinlyRecord[] = [];
 
     const groupedRecordValues = Object.values(groupedRecords);
     for (let i = 0; i < groupedRecordValues.length; i++) {
       const recordGroup = groupedRecordValues[i] as HederaRecord[];
 
-      // console.log("Processing group :::::", recordGroup);
-
       for (let j = 0; j < recordGroup.length; j++) {
         const recordGroupItem = recordGroup[j];
 
-        const Currency = "HBAR";
-        const TxHash = recordGroupItem["#transaction_id"];
+        const recordFields: KoinlyRecord = {
+          "Koinly Date": convertDateFormat(recordGroupItem["#date"]),
+          Amount: "",
+          Currency: "HBAR",
+          Label: "",
+          TxHash: recordGroupItem["#transaction_id"],
+        };
 
-        // Deposits
-        if (recordGroupItem["#to_account_id"] === walletId) {
-          let rewardRecord: HederaRecord | undefined = undefined;
+        // Skip records that are neither deposits nor withdrawals
+        const isDeposit = recordGroupItem["#to_account_id"] === walletId;
+        const isWithdrawal = recordGroupItem["#from_account_id"] === walletId;
+        if (!isDeposit && !isWithdrawal) {
+          continue;
+        }
 
-          // If the wallet is a staking wallet, find the reward record
-          if (WALLETS[walletId]?.staking) {
-            rewardRecord = recordGroup.find((record: HederaRecord) => {
-              return record["#from_account_id"] === STAKING_REWARD_ACCOUNT;
-            });
-          }
-
-          const rewardAmount: number = rewardRecord
-            ? convertFormattedStringToNumber(rewardRecord["#amount"])
-            : 0;
-          const depositAmount: number = convertFormattedStringToNumber(
-            recordGroupItem["#amount"]
-          );
-
-          // Record the deposit
-          transformedData.push({
-            "Koinly Date": convertDateFormat(recordGroupItem["#date"]),
-            Amount: `+${convertNumberToFormattedString(
-              depositAmount - rewardAmount
-            )}`,
-            Currency,
-            Label: "",
-            TxHash,
+        // If the wallet is a staking wallet, find the reward record
+        let rewardRecord: HederaRecord | undefined = undefined;
+        if (WALLETS[walletId]?.staking) {
+          rewardRecord = recordGroup.find((record: HederaRecord) => {
+            return record["#from_account_id"] === STAKING_REWARD_ACCOUNT;
           });
+        }
 
-          // Record the reward
-          if (rewardAmount > 0) {
-            transformedData.push({
-              "Koinly Date": convertDateFormat(recordGroupItem["#date"]),
-              Amount: `+${convertNumberToFormattedString(rewardAmount)}`,
-              Currency,
-              Label: "Reward",
-              TxHash,
-            });
-          }
+        const rewardAmount: number = rewardRecord
+          ? convertFormattedStringToNumber(rewardRecord["#amount"])
+          : 0;
+
+        const amount: number = convertFormattedStringToNumber(
+          recordGroupItem["#amount"]
+        );
+
+        if (
+          recordGroupItem["#transaction_id"] ===
+          "0.0.7187576-1728441759-541126069"
+        ) {
+          console.log("Record Group Item:", recordGroupItem);
+          console.log("Reward Record:", rewardRecord);
+          console.log("Amount:", amount);
+          console.log("Reward Amount:", rewardAmount);
+          console.log(
+            "Reward Amount::::",
+            `-${convertNumberToFormattedString(amount + rewardAmount)}`
+          );
+          console.log("isWithdrawal", isWithdrawal);
+        }
+
+        // Record the deposit or withdrawal
+        if (isDeposit) {
+          transformedData.push({
+            ...recordFields,
+            Amount: convertNumberToFormattedString(amount - rewardAmount),
+          });
+        } else if (isWithdrawal) {
+          transformedData.push({
+            ...recordFields,
+            Amount: `-${convertNumberToFormattedString(amount + rewardAmount)}`,
+          });
+        }
+
+        // Record the reward
+        if (rewardAmount > 0) {
+          transformedData.push({
+            ...recordFields,
+            Amount: convertNumberToFormattedString(rewardAmount),
+            Label: "Reward",
+          });
         }
       }
     }
